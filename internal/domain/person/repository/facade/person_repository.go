@@ -1,10 +1,12 @@
 package facade
 
-import "github.com/Chengxufeng1994/go-ddd-leave/internal/domain/person/repository/po"
+import (
+	"github.com/Chengxufeng1994/go-ddd-leave/internal/domain/person/entity"
+)
 
 type PersonRepositoryInterface interface {
-	Insert(person *po.Person)
-	Update(person *po.Person)
-	FindByID(id string) (*po.Person, error)
-	FindByLeaderByPersonID(leaderID string) (*po.Person, error)
+	Save(person *entity.Person)
+	Update(person *entity.Person)
+	FindByID(personID string) *entity.Person
+	FindByLeaderByPersonID(leaderID string) *entity.Person
 }
