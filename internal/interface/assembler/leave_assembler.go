@@ -21,7 +21,7 @@ func NewLeaveAssembler() *LeaveAssembler {
 }
 
 // domain object to data transfer object
-func (leaveAssembler *LeaveAssembler) ToDTO(do *entity.Leave) *dto.LeaveDTO {
+func (leaveAssembler *LeaveAssembler) ToDTO(do *entity.LeaveAggregate) *dto.LeaveDTO {
 	historyApprovalInfoDTOList := make([]dto.ApprovalInfoDTO, 0, len(do.HistoryApprovalInfos))
 	for i := 0; i < len(do.HistoryApprovalInfos); i++ {
 		historyApprovalInfoDTOList = append(historyApprovalInfoDTOList, leaveAssembler.approvalInfoAssembler.ToDTO(do.HistoryApprovalInfos[i]))
@@ -42,8 +42,8 @@ func (leaveAssembler *LeaveAssembler) ToDTO(do *entity.Leave) *dto.LeaveDTO {
 }
 
 // data transfer object to domain object
-func (leaveAssembler *LeaveAssembler) ToDO(dto *dto.LeaveDTO) *entity.Leave {
-	leave := new(entity.Leave)
+func (leaveAssembler *LeaveAssembler) ToDO(dto *dto.LeaveDTO) *entity.LeaveAggregate {
+	leave := entity.NewLeaveAggregate()
 	leave.SetID(dto.LeaveID)
 	leave.LeaveType = valueobject.NewLeaveType(dto.LeaveType)
 	leave.Applicant = leaveAssembler.applicantAssembler.ToDO(&dto.ApplicantDTO)

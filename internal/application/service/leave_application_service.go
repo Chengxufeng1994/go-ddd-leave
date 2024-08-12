@@ -24,34 +24,34 @@ func NewLeaveApplicationService(leaveDomainService *domainleaveservice.LeaveDoma
 }
 
 // CreateLeaveInfo implements usecase.LeaveUseCase.
-func (svc *LeaveApplicationService) CreateLeaveInfo(leave *entity.Leave) {
+func (svc *LeaveApplicationService) CreateLeaveInfo(leave *entity.LeaveAggregate) {
 	leaderMaxLevel := svc.approvalruleDomainService.GetLeaderMaxLevel(leave.Applicant.PersonType, string(leave.LeaveType), leave.GetDuration())
 	approver := svc.personDomainService.FindFirstApprover(leave.Applicant.PersonID, leaderMaxLevel)
 	svc.leaveDomainService.CreateLeave(leave, leaderMaxLevel, valueobject.FromPerson(approver))
 }
 
 // UpdateLeaveInfo implements usecase.LeaveUseCase.
-func (svc *LeaveApplicationService) UpdateLeaveInfo(leave *entity.Leave) {
+func (svc *LeaveApplicationService) UpdateLeaveInfo(leave *entity.LeaveAggregate) {
 	svc.leaveDomainService.UpdateLeave(leave)
 }
 
 // GetLeaveInfo implements usecase.LeaveUseCase.
-func (svc *LeaveApplicationService) GetLeaveInfo(leaveID string) (*entity.Leave, error) {
+func (svc *LeaveApplicationService) GetLeaveInfo(leaveID string) (*entity.LeaveAggregate, error) {
 	return svc.leaveDomainService.GetLeaveInfo(leaveID)
 }
 
 // SubmitApproval implements usecase.LeaveUseCase.
-func (svc *LeaveApplicationService) SubmitApproval(leave *entity.Leave) {
+func (svc *LeaveApplicationService) SubmitApproval(leave *entity.LeaveAggregate) {
 	approver := svc.personDomainService.FindNextApprover(leave.Approver.PersonID, leave.LeaderMaxLevel)
 	svc.leaveDomainService.SubmitApproval(leave, valueobject.FromPerson(approver))
 }
 
 // QueryLeaveInfosByApplicant implements usecase.LeaveUseCase.
-func (svc *LeaveApplicationService) QueryLeaveInfosByApplicant(applicantID string) ([]*entity.Leave, error) {
+func (svc *LeaveApplicationService) QueryLeaveInfosByApplicant(applicantID string) ([]*entity.LeaveAggregate, error) {
 	return svc.leaveDomainService.QueryLeaveInfoByApplicant(applicantID)
 }
 
 // QueryLeaveInfosByApprover implements usecase.LeaveUseCase.
-func (svc *LeaveApplicationService) QueryLeaveInfosByApprover(approverID string) ([]*entity.Leave, error) {
+func (svc *LeaveApplicationService) QueryLeaveInfosByApprover(approverID string) ([]*entity.LeaveAggregate, error) {
 	return svc.leaveDomainService.QueryLeaveInfoByApprover(approverID)
 }

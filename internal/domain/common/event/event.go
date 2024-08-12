@@ -17,9 +17,9 @@ const (
 )
 
 type BaseDomainEvent struct {
-	id        string
-	name      DomainEventName
-	eType     DomainEventType
+	eventID   string
+	eventName DomainEventName
+	eventType DomainEventType
 	status    DomainEventStatus
 	timestamp time.Time
 	data      []byte
@@ -29,24 +29,24 @@ type BaseDomainEvent struct {
 
 func NewBaseDomainEvent(eType DomainEventType, data []byte) BaseDomainEvent {
 	return BaseDomainEvent{
-		id:        uuid.New().String(),
-		eType:     eType,
+		eventID:   uuid.New().String(),
+		eventType: eType,
 		status:    CREATED,
-		timestamp: time.Now(),
+		timestamp: time.Now().UTC(),
 		data:      data,
 	}
 }
 
 func (event *BaseDomainEvent) ID() string {
-	return event.id
+	return event.eventID
 }
 
 func (event *BaseDomainEvent) Name() DomainEventName {
-	return event.name
+	return event.eventName
 }
 
 func (event *BaseDomainEvent) Type() DomainEventType {
-	return event.eType
+	return event.eventType
 }
 
 func (event *BaseDomainEvent) Status() DomainEventStatus {

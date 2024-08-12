@@ -1,15 +1,17 @@
 package facade
 
 import (
+	"context"
+
 	"github.com/Chengxufeng1994/go-ddd-leave/internal/domain/leave/entity"
 	"github.com/Chengxufeng1994/go-ddd-leave/internal/domain/leave/event"
 )
 
 type LeaveRepositoryInterface interface {
-	Save(entity *entity.Leave)
-	FindByID(id string) (*entity.Leave, error)
-	QueryByApplicantID(applicantID string) []*entity.Leave
-	QueryByApproverID(approverID string) []*entity.Leave
+	Load(ctx context.Context, id string) (*entity.LeaveAggregate, error)
+	Save(ctx context.Context, entity *entity.LeaveAggregate)
+	QueryByApplicantID(ctx context.Context, applicantID string) []*entity.LeaveAggregate
+	QueryByApproverID(ctx context.Context, approverID string) []*entity.LeaveAggregate
 
 	SaveEvent(event event.LeaveEvent)
 }

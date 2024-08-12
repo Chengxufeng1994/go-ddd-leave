@@ -1,15 +1,19 @@
 package entity
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/Chengxufeng1994/go-ddd-leave/internal/domain/common/aggregate"
+	commonevt "github.com/Chengxufeng1994/go-ddd-leave/internal/domain/common/event"
 	"github.com/Chengxufeng1994/go-ddd-leave/internal/domain/leave/entity/valueobject"
+	"github.com/Chengxufeng1994/go-ddd-leave/internal/domain/leave/event"
 )
 
-// Leave aggregate
-type Leave struct {
-	aggregate.AggregateBase
+// LeaveAggregate aggregate
+type LeaveAggregate struct {
+	*aggregate.AggregateBase
 	Applicant valueobject.Applicant
 	Approver  valueobject.Approver
 	LeaveType valueobject.LeaveType
@@ -23,40 +27,71 @@ type Leave struct {
 	HistoryApprovalInfos []*ApprovalInfo
 }
 
-var _ aggregate.Aggregate = (*Leave)(nil)
+var _ aggregate.Aggregate = (*LeaveAggregate)(nil)
 
-func (entity *Leave) GetDuration() int64 {
-	duration := entity.EndTime.Sub(entity.StartTime)
+func NewLeaveAggregateWithID(id string) *LeaveAggregate {
+	aggregate := NewLeaveAggregate()
+	aggregate.SetID(id)
+	return aggregate
+}
+
+func NewLeaveAggregate() *LeaveAggregate {
+	leaveAggregate := &LeaveAggregate{}
+	base := aggregate.NewAggregateBase()
+	leaveAggregate.AggregateBase = base
+	return leaveAggregate
+}
+
+func (agg *LeaveAggregate) On(evt commonevt.Event) error {
+	switch evt.Type() {
+	case event.LeaveCreated:
+		return agg.OnLeaveCreated(evt)
+	default:
+		return fmt.Errorf("invalid event type: %s", evt.Type())
+	}
+}
+
+func (agg *LeaveAggregate) GetDuration() int64 {
+	duration := agg.EndTime.Sub(agg.StartTime)
 	return int64(duration)
 }
 
-func (entity *Leave) AddHistoryApprovalInfo(approvalInfo *ApprovalInfo) {
-	if entity.HistoryApprovalInfos == nil {
-		entity.HistoryApprovalInfos = make([]*ApprovalInfo, 0)
+func (agg *LeaveAggregate) AddHistoryApprovalInfo(approvalInfo *ApprovalInfo) {
+	if agg.HistoryApprovalInfos == nil {
+		agg.HistoryApprovalInfos = make([]*ApprovalInfo, 0)
 	}
 
-	entity.HistoryApprovalInfos = append(entity.HistoryApprovalInfos, approvalInfo)
+	agg.HistoryApprovalInfos = append(agg.HistoryApprovalInfos, approvalInfo)
 }
 
-func (entity *Leave) Create() {
-	entity.StartTime = time.Now()
-	entity.Status = valueobject.APPROVING
+func (agg *LeaveAggregate) Create() {
+	agg.StartTime = time.Now()
+	agg.Status = valueobject.APPROVING
 }
 
-func (entity *Leave) Agree(nextApprover valueobject.Approver) {
-	entity.Approver = nextApprover
-	entity.Status = valueobject.APPROVING
+func (agg *LeaveAggregate) Agree(nextApprover valueobject.Approver) {
+	agg.Approver = nextApprover
+	agg.Status = valueobject.APPROVING
 }
 
-func (entity *Leave) Reject(approver valueobject.Approver) {
-	entity.Approver = approver
-	entity.Status = valueobject.REJECTED
-	entity.Approver = valueobject.Approver{}
+func (agg *LeaveAggregate) Reject(approver valueobject.Approver) {
+	agg.Approver = approver
+	agg.Status = valueobject.REJECTED
+	agg.Approver = valueobject.Approver{}
 }
 
-func (entity *Leave) Finish() {
-	entity.Approver = valueobject.Approver{}
-	entity.Status = valueobject.APPROVED
-	entity.EndTime = time.Now()
-	entity.Duration = int64(entity.EndTime.Sub(entity.StartTime))
+func (agg *LeaveAggregate) Finish() {
+	agg.Approver = valueobject.Approver{}
+	agg.Status = valueobject.APPROVED
+	agg.EndTime = time.Now()
+	agg.Duration = int64(agg.EndTime.Sub(agg.StartTime))
+}
+
+func (agg *LeaveAggregate) OnLeaveCreated(evt commonevt.Event) error {
+	var dat event.LeaveCreatedEvent
+	if err := json.Unmarshal(evt.Data(), &dat); err != nil {
+		return err
+	}
+
+	return nil
 }

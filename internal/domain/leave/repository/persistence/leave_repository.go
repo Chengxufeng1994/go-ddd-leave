@@ -1,9 +1,11 @@
 package persistence
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
+	"github.com/Chengxufeng1994/go-ddd-leave/internal/domain/common/aggregate"
 	"github.com/Chengxufeng1994/go-ddd-leave/internal/domain/leave/entity"
 	"github.com/Chengxufeng1994/go-ddd-leave/internal/domain/leave/event"
 	"github.com/Chengxufeng1994/go-ddd-leave/internal/domain/leave/repository/dao"
@@ -14,32 +16,32 @@ import (
 )
 
 type LeaveRepository struct {
-	leaveMapper     mapper.LeaveMapper
+	st              util.IDGenerator
+	mapper          mapper.LeaveMapper
 	leaveDao        dao.LeaveDao
 	leaveEventDao   dao.LeaveEventDao
 	approvalInfoDao dao.ApprovalInfoDao
-	st              util.IDGenerator
+	esStore         aggregate.EventStore
 }
 
 var _ facade.LeaveRepositoryInterface = (*LeaveRepository)(nil)
 
 func NewLeaveRepository(leaveDao dao.LeaveDao, approvalInfoDao dao.ApprovalInfoDao, leaveEventDao dao.LeaveEventDao, st util.IDGenerator) facade.LeaveRepositoryInterface {
-
 	return &LeaveRepository{
-		leaveMapper:     mapper.NewLeaveMapper(),
+		st:              st,
+		mapper:          mapper.NewLeaveMapper(),
 		leaveDao:        leaveDao,
 		leaveEventDao:   leaveEventDao,
 		approvalInfoDao: approvalInfoDao,
-		st:              st,
 	}
 }
 
 // Save implements facade.LeaveRepositoryInterface.
-func (repo *LeaveRepository) Save(entity *entity.Leave) {
+func (repo *LeaveRepository) Save(ctx context.Context, entity *entity.LeaveAggregate) {
 	stId, _ := repo.st.NextID()
 	entity.SetID(strconv.Itoa(int(stId)))
-	repo.leaveDao.Save(repo.leaveMapper.ToPersistence(entity))
-	po := repo.leaveMapper.ToPersistence(entity)
+	repo.leaveDao.Save(repo.mapper.ToPersistence(entity))
+	po := repo.mapper.ToPersistence(entity)
 	repo.approvalInfoDao.SaveAll(po.HistoryApprovalInfoPOList)
 }
 
@@ -54,17 +56,17 @@ func (repo *LeaveRepository) SaveEvent(entity event.LeaveEvent) {
 	})
 }
 
-// FindByID implements facade.LeaveRepositoryInterface.
-func (repo *LeaveRepository) FindByID(id string) (*entity.Leave, error) {
+// Load implements facade.LeaveRepositoryInterface.
+func (repo *LeaveRepository) Load(ctx context.Context, id string) (*entity.LeaveAggregate, error) {
 	po := repo.leaveDao.FindByID(id)
 	if po == nil {
 		return nil, fmt.Errorf("leave %s not found", id)
 	}
-	return repo.leaveMapper.ToDomain(po), nil
+	return repo.mapper.ToDomain(po), nil
 }
 
 // QueryByApplicantID implements facade.LeaveRepositoryInterface.
-func (repo *LeaveRepository) QueryByApplicantID(applicantID string) []*entity.Leave {
+func (repo *LeaveRepository) QueryByApplicantID(ctx context.Context, applicantID string) []*entity.LeaveAggregate {
 	leaveList := repo.leaveDao.QueryByApplicantID(applicantID)
 	for i := 0; i < len(leaveList); i++ {
 		item := leaveList[i]
@@ -72,15 +74,15 @@ func (repo *LeaveRepository) QueryByApplicantID(applicantID string) []*entity.Le
 		item.HistoryApprovalInfoPOList = approvalInfoList
 	}
 
-	entities := make([]*entity.Leave, 0, len(leaveList))
+	entities := make([]*entity.LeaveAggregate, 0, len(leaveList))
 	for i := 0; i < len(leaveList); i++ {
-		entities = append(entities, repo.leaveMapper.ToDomain(leaveList[i]))
+		entities = append(entities, repo.mapper.ToDomain(leaveList[i]))
 	}
 	return entities
 }
 
 // QueryByApproverID implements facade.LeaveRepositoryInterface.
-func (repo *LeaveRepository) QueryByApproverID(approverID string) []*entity.Leave {
+func (repo *LeaveRepository) QueryByApproverID(ctx context.Context, approverID string) []*entity.LeaveAggregate {
 	leaveList := repo.leaveDao.QueryByApproverID(approverID)
 	for i := 0; i < len(leaveList); i++ {
 		item := leaveList[i]
@@ -88,9 +90,9 @@ func (repo *LeaveRepository) QueryByApproverID(approverID string) []*entity.Leav
 		item.HistoryApprovalInfoPOList = approvalInfoList
 	}
 
-	entities := make([]*entity.Leave, 0, len(leaveList))
+	entities := make([]*entity.LeaveAggregate, 0, len(leaveList))
 	for i := 0; i < len(leaveList); i++ {
-		entities = append(entities, repo.leaveMapper.ToDomain(leaveList[i]))
+		entities = append(entities, repo.mapper.ToDomain(leaveList[i]))
 	}
 	return entities
 }

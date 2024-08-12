@@ -22,7 +22,7 @@ func (h *SendEmailHandler) Handle(evt commonevent.Event) error {
 	case *leaveevent.LeaveCreatedEvent:
 		// fmt.Printf("%s\n", e.Data())
 
-		var leaveDo entity.Leave
+		var leaveDo entity.LeaveAggregate
 		_ = json.Unmarshal(e.Data(), &leaveDo)
 		fmt.Printf("id %s\n", e.ID())
 		fmt.Printf("name %s\n", e.Name())

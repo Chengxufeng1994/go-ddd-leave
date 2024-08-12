@@ -23,6 +23,7 @@ import (
 	rulepo "github.com/Chengxufeng1994/go-ddd-leave/internal/domain/rule/repository/po"
 	ruledomainservice "github.com/Chengxufeng1994/go-ddd-leave/internal/domain/rule/service"
 	"github.com/Chengxufeng1994/go-ddd-leave/internal/infrastructure/broker"
+	"github.com/Chengxufeng1994/go-ddd-leave/internal/infrastructure/eventstoredb"
 	"github.com/Chengxufeng1994/go-ddd-leave/internal/infrastructure/util"
 	"github.com/Chengxufeng1994/go-ddd-leave/internal/interface/facade"
 	"github.com/gin-gonic/gin"
@@ -45,35 +46,36 @@ func main() {
 		},
 	)
 
-	db, _ := gorm.Open(postgres.New(postgres.Config{
+	gormDb, _ := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  "user=postgres password=P@ssw0rd host=10.1.5.7 dbname=postgres port=31970 sslmode=disable search_path=leave_sample TimeZone=Asia/Shanghai",
 		PreferSimpleProtocol: true, // disables implicit prepared statement usage
 	}), &gorm.Config{
 		Logger: newLogger,
 	})
-	db.AutoMigrate(&personpo.Person{}, &personpo.Relationship{})
-	db.AutoMigrate(&leavepo.LeaveEvent{}, &leavepo.Leave{}, &leavepo.ApprovalInfo{})
-	db.AutoMigrate(&rulepo.ApprovalRule{})
+	gormDb.AutoMigrate(&personpo.Person{}, &personpo.Relationship{})
+	gormDb.AutoMigrate(&leavepo.LeaveEvent{}, &leavepo.Leave{}, &leavepo.ApprovalInfo{})
+	gormDb.AutoMigrate(&rulepo.ApprovalRule{})
+
+	esDb, _ := eventstoredb.NewEventStoreDB()
+	defer esDb.Close()
 
 	sendEmailHandler := event.NewSendEmailHandler()
 	leavePublisher := broker.NewLeavePublisher()
 	leavePublisher.Subscribe(sendEmailHandler,
 		[]commonevt.Event{&leaveevt.LeaveCreatedEvent{}}...)
 
-	approvalInfoDao := leavedao.NewApprovalInfoDao(db)
-
-	// sf, _ := util.NewSonyFlake()
 	sf, _ := util.NewSnowFlake()
-	leaveDao := leavedao.NewLeaveDao(db)
-	leaveEventDao := leavedao.NewLeaveEventDao(db)
+	approvalInfoDao := leavedao.NewApprovalInfoDao(gormDb)
+	leaveDao := leavedao.NewLeaveDao(gormDb)
+	leaveEventDao := leavedao.NewLeaveEventDao(gormDb)
 	leaveRepository := leavepersistence.NewLeaveRepository(leaveDao, approvalInfoDao, leaveEventDao, sf)
 	leaveFactory := leavedomainservice.NewLeaveFactory()
 
-	personDao := persondao.NewPersonDao(db)
+	personDao := persondao.NewPersonDao(gormDb)
 	personRepository := personpersistence.NewPersonRepository(personDao)
 	personDomainService := persondomainservice.NewPersonDomainService(personRepository)
 
-	approvalRuleDao := ruledao.NewApprovalRuleDao(db)
+	approvalRuleDao := ruledao.NewApprovalRuleDao(gormDb)
 	approvalRuleRepository := ruelpersistence.NewApprovalRuleRepository(approvalRuleDao)
 	approvalRuleDomainService := ruledomainservice.NewApprovalRuleDomainService(approvalRuleRepository)
 

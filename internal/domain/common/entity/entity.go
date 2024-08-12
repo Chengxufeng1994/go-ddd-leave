@@ -9,6 +9,10 @@ type EntityBase struct {
 	id string
 }
 
+func NewEntityBase() *EntityBase {
+	return &EntityBase{}
+}
+
 func (entity *EntityBase) GetID() string {
 	return entity.id
 }

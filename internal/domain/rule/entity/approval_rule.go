@@ -17,7 +17,7 @@ func NewApprovalRule(personType, leaveType string, duration int64) *ApprovalRule
 	return approvalRule
 }
 
-func NewApprovalRuleByLeave(leave *entity.Leave) *ApprovalRule {
+func NewApprovalRuleByLeave(leave *entity.LeaveAggregate) *ApprovalRule {
 	approvalRule := new(ApprovalRule)
 	approvalRule.PersonType = leave.Applicant.PersonType
 	approvalRule.LeaveType = string(leave.LeaveType)

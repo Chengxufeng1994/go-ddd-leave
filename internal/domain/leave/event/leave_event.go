@@ -3,8 +3,12 @@ package event
 import (
 	"encoding/json"
 
+	"github.com/Chengxufeng1994/go-ddd-leave/internal/domain/common/aggregate"
 	common "github.com/Chengxufeng1994/go-ddd-leave/internal/domain/common/event"
-	"github.com/Chengxufeng1994/go-ddd-leave/internal/domain/leave/entity"
+)
+
+const (
+	LeaveCreated = "LEAVE_CREATED"
 )
 
 type LeaveEvent interface {
@@ -17,11 +21,11 @@ type LeaveCreatedEvent struct {
 	leaveID string
 }
 
-func NewLeaveCreatedEvent(leave *entity.Leave) LeaveEvent {
-	data, _ := json.Marshal(leave)
+func NewLeaveCreatedEvent(aggregate aggregate.Aggregate) LeaveEvent {
+	data, _ := json.Marshal(aggregate)
 	return &LeaveCreatedEvent{
 		BaseDomainEvent: common.NewBaseDomainEvent(Create, data),
-		leaveID:         leave.GetID(),
+		leaveID:         aggregate.GetID(),
 	}
 }
 
@@ -38,10 +42,10 @@ type LeaveRejectedEvent struct {
 	leaveID string
 }
 
-func NewLeaveRejectedEvent(leave *entity.Leave) LeaveEvent {
+func NewLeaveRejectedEvent(aggregate aggregate.Aggregate) LeaveEvent {
 	return &LeaveRejectedEvent{
-		BaseDomainEvent: common.NewBaseDomainEvent(Create, nil),
-		leaveID:         leave.GetID(),
+		BaseDomainEvent: common.NewBaseDomainEvent(Reject, nil),
+		leaveID:         aggregate.GetID(),
 	}
 }
 

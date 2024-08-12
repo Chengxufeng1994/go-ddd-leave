@@ -14,8 +14,8 @@ func NewLeaveMapper() LeaveMapper {
 	return LeaveMapper{}
 }
 
-func (m LeaveMapper) ToDomain(po *po.Leave) *entity.Leave {
-	do := &entity.Leave{
+func (m LeaveMapper) ToDomain(po *po.Leave) *entity.LeaveAggregate {
+	do := &entity.LeaveAggregate{
 		Applicant:            valueobject.NewApplicant(po.ApplicantID, po.ApplicantName, po.ApplicantType),
 		Approver:             valueobject.NewApprover(po.ApproverID, po.ApproverName),
 		LeaveType:            valueobject.NewLeaveType(po.LeaveType),
@@ -31,7 +31,7 @@ func (m LeaveMapper) ToDomain(po *po.Leave) *entity.Leave {
 	return do
 }
 
-func (m LeaveMapper) ToCreateLeavePersistence(do *entity.Leave) *po.Leave {
+func (m LeaveMapper) ToCreateLeavePersistence(do *entity.LeaveAggregate) *po.Leave {
 	leavePo := new(po.Leave)
 	leavePo.ID = do.GetID()
 	leavePo.ApplicantID = do.Applicant.PersonID
@@ -44,7 +44,7 @@ func (m LeaveMapper) ToCreateLeavePersistence(do *entity.Leave) *po.Leave {
 	return leavePo
 }
 
-func (m LeaveMapper) ToPersistence(do *entity.Leave) *po.Leave {
+func (m LeaveMapper) ToPersistence(do *entity.LeaveAggregate) *po.Leave {
 	return &po.Leave{
 		ID:                        do.GetID(),
 		ApplicantID:               do.Applicant.PersonID,
@@ -62,7 +62,7 @@ func (m LeaveMapper) ToPersistence(do *entity.Leave) *po.Leave {
 	}
 }
 
-func (m LeaveMapper) approvalInfoListPOFromDO(do *entity.Leave) []*po.ApprovalInfo {
+func (m LeaveMapper) approvalInfoListPOFromDO(do *entity.LeaveAggregate) []*po.ApprovalInfo {
 	n := len(do.HistoryApprovalInfos)
 	historyApprovalInfos := make([]*po.ApprovalInfo, 0, n)
 	for i := 0; i < n; i++ {
